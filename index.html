@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A simple six-subject IB revision newspaper with a local edition archive.">
+  <title>IB Daily — Revision Newspaper</title>
+  <style>
+    :root {
+      --ink: #20313a;
+      --muted: #64727a;
+      --paper: #fffefa;
+      --ground: #edf1ef;
+      --blue: #244b63;
+      --line: #dce3df;
+      --accent: #c28a42;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--ground);
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.6;
+    }
+    .masthead {
+      padding: 2rem 1rem 1.5rem;
+      color: #fff;
+      text-align: center;
+      background: var(--blue);
+      border-bottom: 5px solid var(--accent);
+    }
+    .masthead h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      letter-spacing: .02em;
+    }
+    .masthead p { margin: .35rem 0 0; color: #e5edf1; }
+    main { width: min(1050px, calc(100% - 2rem)); margin: 1.5rem auto 3rem; }
+    .panel, .paper {
+      margin-bottom: 1.25rem;
+      padding: clamp(1rem, 3vw, 1.6rem);
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      box-shadow: 0 3px 14px #20313a0c;
+    }
+    h2 { margin: 0 0 .8rem; color: var(--blue); }
+    h3 { margin: 0 0 .6rem; color: var(--blue); }
+    label { display: block; margin-top: .8rem; font-weight: bold; }
+    input, textarea {
+      display: block;
+      width: 100%;
+      margin-top: .3rem;
+      padding: .7rem .75rem;
+      border: 1px solid #bdc9c6;
+      border-radius: 5px;
+      color: var(--ink);
+      background: white;
+      font: inherit;
+    }
+    textarea { min-height: 125px; resize: vertical; font-family: inherit; }
+    .field-note, .small-note { color: var(--muted); font-size: .9rem; }
+    .subject-editor, .subject-story { padding: 1rem 0; border-top: 1px solid var(--line); }
+    .subject-editor:first-of-type, .subject-story:first-of-type { border-top: 0; }
+    .subject-story { break-inside: avoid; }
+    .story-copy { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1rem; }
+    button {
+      padding: .65rem .95rem;
+      border: 0;
+      border-radius: 5px;
+      color: white;
+      background: var(--blue);
+      font: 600 .95rem system-ui, sans-serif;
+      cursor: pointer;
+    }
+    button:hover { background: #37647d; }
+    button.secondary { color: var(--blue); background: #e7eef1; }
+    button.danger { background: #8d3939; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #d5a45e; outline-offset: 2px; }
+    .edition-row { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .75rem 0; border-top: 1px solid var(--line); }
+    .edition-row:first-child { border-top: 0; }
+    .edition-name { font-weight: bold; }
+    .edition-buttons { display: flex; gap: .4rem; flex-shrink: 0; }
+    #paperDate { margin-top: -.5rem; color: var(--muted); }
+    .empty { color: var(--muted); font-style: italic; }
+    footer { padding: 0 1rem 2rem; color: var(--muted); text-align: center; font: .85rem system-ui, sans-serif; }
+    @media (max-width: 600px) {
+      main { width: min(100% - 1rem, 1050px); margin-top: .75rem; }
+      .edition-row { align-items: flex-start; flex-direction: column; }
+    }
+    @media print {
+      @page { margin: 16mm; }
+      body { background: #fff; color: #111; font-size: 11pt; }
+      .masthead { padding: 0 0 1rem; color: #111; background: #fff; border-bottom: 2px solid #333; }
+      .masthead p { color: #333; }
+      main { width: 100%; margin: 1rem 0; }
+      .editor, .archive, .actions, footer { display: none !important; }
+      .panel, .paper { padding: 0; border: 0; box-shadow: none; }
+      .paper { display: block !important; }
+      .subject-story { page-break-inside: avoid; }
+      h2, h3 { color: #111; }
+    }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <h1>IB Daily</h1>
+    <p>Six subjects · One focused revision session</p>
+  </header>
+
+  <main>
+    <section class="panel editor" aria-labelledby="editorHeading">
+      <h2 id="editorHeading">Create today's edition</h2>
+      <p class="field-note">Add a short report for each subject. Editions are saved in this browser on this device.</p>
+      <label for="editionTitle">Edition headline</label>
+      <input id="editionTitle" maxlength="120" placeholder="Friday's Revision Briefing">
+      <label for="editionDate">Date</label>
+      <input id="editionDate" type="date">
+      <div id="subjectFields"></div>
+      <div class="actions">
+        <button id="saveButton" type="button">Save edition</button>
+        <button id="clearButton" class="secondary" type="button">New / clear</button>
+      </div>
+    </section>
+
+    <section class="panel actions" aria-label="Edition actions">
+      <button id="pdfButton" type="button">Download today's edition (PDF)</button>
+      <span class="small-note">Your browser's print window will open; choose “Save as PDF”.</span>
+    </section>
+
+    <article class="paper" aria-labelledby="paperTitle">
+      <h2 id="paperTitle">Welcome to IB Daily</h2>
+      <p id="paperDate"></p>
+      <div id="paperContent"><p class="empty">Create or open an edition to see your revision newspaper.</p></div>
+    </article>
+
+    <section class="panel archive" aria-labelledby="archiveHeading">
+      <h2 id="archiveHeading">Previous editions</h2>
+      <div id="archiveList"><p class="empty">No saved editions yet.</p></div>
+    </section>
+  </main>
+  <footer>IB Daily is a personal revision tool. Remember to check facts and cite reliable sources in your notes.</footer>
+
+  <script>
+    'use strict';
+    const SUBJECTS = [
+      { id: 'language', name: 'Language and Literature' },
+      { id: 'language-acquisition', name: 'Language Acquisition' },
+      { id: 'individuals-societies', name: 'Individuals and Societies' },
+      { id: 'sciences', name: 'Sciences' },
+      { id: 'mathematics', name: 'Mathematics' },
+      { id: 'arts', name: 'The Arts' }
+    ];
+    const STORAGE_KEY = 'ibDailyNewspaper.v1';
+    let editions = loadEditions();
+    let currentId = null;
+
+    function loadEditions() {
+      try {
+        const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        return Array.isArray(value) ? value.filter(item => item && typeof item === 'object') : [];
+      } catch (error) {
+        console.warn('Could not read the edition archive.', error);
+        return [];
+      }
+    }
+
+    function saveStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(editions));
+        return true;
+      } catch (error) {
+        alert('Could not save this edition. Your browser storage may be full or disabled.');
+        return false;
+      }
+    }
+
+    function makeSubjectFields() {
+      const container = document.getElementById('subjectFields');
+      SUBJECTS.forEach(subject => {
+        const section = document.createElement('section');
+        section.className = 'subject-editor';
+        const label = document.createElement('label');
+        label.htmlFor = `field-${subject.id}`;
+        label.textContent = subject.name;
+        const textarea = document.createElement('textarea');
+        textarea.id = `field-${subject.id}`;
+        textarea.placeholder = `Add today's ${subject.name} notes...`;
+        textarea.maxLength = 12000;
+        section.append(label, textarea);
+        container.appendChild(section);
+      });
+    }
+
+    function readForm() {
+      const title = document.getElementById('editionTitle').value.trim();
+      const date = document.getElementById('editionDate').value;
+      const content = {};
+      SUBJECTS.forEach(subject => {
+        content[subject.id] = document.getElementById(`field-${subject.id}`).value.trim();
+      });
+      return { title, date, content };
+    }
+
+    function saveEdition() {
+      const form = readForm();
+      if (!form.title || !form.date || !SUBJECTS.some(subject => form.content[subject.id])) {
+        alert('Please add an edition headline, date, and at least one subject report.');
+        return;
+      }
+      const edition = { id: currentId || (globalThis.crypto?.randomUUID?.() || Date.now().toString()), ...form };
+      const index = editions.findIndex(item => item.id === edition.id);
+      if (index >= 0) editions[index] = edition;
+      else editions.push(edition);
+      if (!saveStorage()) return;
+      currentId = edition.id;
+      renderEdition(edition);
+      renderArchive();
+    }
+
+    function renderEdition(edition) {
+      currentId = edition.id;
+      document.getElementById('paperTitle').textContent = edition.title || 'Untitled edition';
+      document.getElementById('paperDate').textContent = edition.date || '';
+      const content = document.getElementById('paperContent');
+      content.replaceChildren();
+      let hasStories = false;
+      SUBJECTS.forEach(subject => {
+        const text = edition.content && typeof edition.content[subject.id] === 'string'
+          ? edition.content[subject.id].trim() : '';
+        if (!text) return;
+        hasStories = true;
+        const section = document.createElement('section');
+        section.className = 'subject-story';
+        const heading = document.createElement('h3');
+        heading.textContent = subject.name;
+        const story = document.createElement('div');
+        story.className = 'story-copy';
+        story.textContent = text;
+        section.append(heading, story);
+        content.appendChild(section);
+      });
+      if (!hasStories) {
+        const empty = document.createElement('p');
+        empty.className = 'empty';
+        empty.textContent = 'This edition has no subject reports yet.';
+        content.appendChild(empty);
+      }
+      document.getElementById('editionTitle').value = edition.title || '';
+      document.getElementById('editionDate').value = edition.date || '';
+      SUBJECTS.forEach(subject => {
+        document.getElementById(`field-${subject.id}`).value =
+          edition.content && typeof edition.content[subject.id] === 'string' ? edition.content[subject.id] : '';
+      });
+    }
+
+    function renderArchive() {
+      const list = document.getElementById('archiveList');
+      list.replaceChildren();
+      const sorted = [...editions].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+      if (!sorted.length) {
+        const empty = document.createElement('p');
+        empty.className = 'empty';
+        empty.textContent = 'No saved editions yet.';
+        list.appendChild(empty);
+        return;
+      }
+      sorted.forEach(edition => {
+        const row = document.createElement('div');
+        row.className = 'edition-row';
+        const name = document.createElement('span');
+        name.className = 'edition-name';
+        name.textContent = `${edition.title || 'Untitled edition'} — ${edition.date || 'No date'}`;
+        const controls = document.createElement('div');
+        controls.className = 'edition-buttons';
+        const open = document.createElement('button');
+        open.type = 'button'; open.className = 'secondary'; open.textContent = 'Open';
+        open.addEventListener('click', () => renderEdition(edition));
+        const remove = document.createElement('button');
+        remove.type = 'button'; remove.className = 'danger'; remove.textContent = 'Delete';
+        remove.addEventListener('click', () => {
+          if (!confirm(`Delete “${edition.title || 'Untitled edition'}”?`)) return;
+          editions = editions.filter(item => item.id !== edition.id);
+          if (!saveStorage()) return;
+          if (currentId === edition.id) clearEditor();
+          renderArchive();
+        });
+        controls.append(open, remove);
+        row.append(name, controls);
+        list.appendChild(row);
+      });
+    }
+
+    function clearEditor() {
+      currentId = null;
+      document.getElementById('editionTitle').value = '';
+      document.getElementById('editionDate').value = localDateString();
+      SUBJECTS.forEach(subject => { document.getElementById(`field-${subject.id}`).value = ''; });
+      document.getElementById('paperTitle').textContent = 'Welcome to IB Daily';
+      document.getElementById('paperDate').textContent = '';
+      const message = document.createElement('p');
+      message.className = 'empty';
+      message.textContent = 'Create or open an edition to see your revision newspaper.';
+      document.getElementById('paperContent').replaceChildren(message);
+    }
+
+    function localDateString() {
+      const now = new Date();
+      const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+      return local.toISOString().slice(0, 10);
+    }
+
+    document.getElementById('saveButton').addEventListener('click', saveEdition);
+    document.getElementById('clearButton').addEventListener('click', clearEditor);
+    document.getElementById('pdfButton').addEventListener('click', () => {
+      if (!currentId) {
+        const form = readForm();
+        if (!form.title || !form.date || !SUBJECTS.some(subject => form.content[subject.id])) {
+          alert('Save an edition or complete the form before creating a PDF.');
+          return;
+        }
+        renderEdition({ id: 'preview-only', ...form });
+      }
+      window.print();
+    });
+
+    makeSubjectFields();
+    document.getElementById('editionDate').value = localDateString();
+    renderArchive();
+    if (editions.length) {
+      const latest = [...editions].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))[0];
+      renderEdition(latest);
+    }
+  </script>
+</body>
+</html>
